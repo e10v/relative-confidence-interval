@@ -1,3 +1,7 @@
+"""Compare several formulas for calculating
+relative difference of two sample means.
+"""
+
 from collections.abc import Callable
 
 import numpy as np
@@ -9,12 +13,12 @@ from tqdm import tqdm
 
 SEED = 42
 TRUE_CONTROL_MEAN = 5
-TRUE_RELATIVE_DIFF = 0.2
+TRUE_RELATIVE_DIFF = 0.3
 TRUE_TREATMENT_MEAN = TRUE_CONTROL_MEAN * (1 + TRUE_RELATIVE_DIFF)
 
-CONTROL_SIZE = 2000
+CONTROL_SIZE = 1000
 TREATEMT_SIZE = CONTROL_SIZE
-N_EXPERIMENTS = 10000
+N_EXPERIMENTS = 1000
 
 SHAPE = 0.2
 CONTROL_PARAMS = {
@@ -52,45 +56,42 @@ def calc_experiment(
     n2 = len(control)
     vn1 = np.var(treatment, ddof=1) / n1
     vn2 = np.var(control, ddof=1) / n2
-    rel_diff = mean1 / mean2 - 1
+    ratio = mean1 / mean2
+    rel_diff = ratio - 1
 
-    naive_ppf = stats.t.ppf(
+    abs_ppf = stats.t.ppf(
         q=0.975,
         df=(vn1 + vn2)**2 / (vn1**2 / (n1 - 1) + vn2**2 / (n2 - 1)),
     )
     naive_lower, naive_upper = (
         rel_diff
-        + np.array([-naive_ppf, naive_ppf]) * np.sqrt(vn1 + vn2) / mean2
-    )
-
-    delta_lower, delta_upper = stats.norm.ppf(
-        q=[0.025, 0.975],
-        loc=rel_diff,
-        scale=np.sqrt((vn1 + vn2 * mean1_sq / mean2_sq) / mean2_sq),
+        + np.array([-abs_ppf, abs_ppf]) * np.sqrt(vn1 + vn2) / mean2
     )
 
     cv1_sq = vn1 / mean1_sq
     cv2_sq = vn2 / mean2_sq
-    fieller_ppf = stats.t.ppf(
+    scale = np.sqrt(cv1_sq + cv2_sq)
+    rel_ppf = stats.t.ppf(
         q=0.975,
         df=(cv1_sq + cv2_sq)**2 / (cv1_sq**2 / (n1 - 1) + cv2_sq**2 / (n2 - 1)),
     )
-    fieller_ppf_sq = fieller_ppf * fieller_ppf
-    fieller_lower, fieller_upper = (
-        (mean1 / mean2)
-        * (
-            1
-            + np.array([-fieller_ppf, fieller_ppf])
-            * np.sqrt(cv1_sq + cv2_sq - fieller_ppf_sq * cv1_sq * cv2_sq)
-        )
-        / (1 - fieller_ppf_sq * cv2_sq)
-    ) - 1
+    t = np.array([-rel_ppf, rel_ppf])
+
+    delta_lower, delta_upper = ratio * (1 + t * scale) - 1
+    logdelta_lower, logdelta_upper = ratio * np.exp(t * scale) - 1
+
+    rel_ppf_sq = rel_ppf * rel_ppf
+    radic = cv1_sq + cv2_sq - rel_ppf_sq * cv1_sq * cv2_sq
+    denom = 1 - rel_ppf_sq * cv2_sq
+    fieller_lower, fieller_upper = ratio * (1 + t * np.sqrt(radic)) / denom - 1
 
     return {
         'naive_lower': naive_lower,
         'naive_upper': naive_upper,
         'delta_lower': delta_lower,
         'delta_upper': delta_upper,
+        'logdelta_lower': logdelta_lower,
+        'logdelta_upper': logdelta_upper,
         'fieller_lower': fieller_lower,
         'fieller_upper': fieller_upper,
     }
@@ -149,7 +150,7 @@ def main():
             ci: null_rejected(
                 aa_data[f'{ci}_lower'].ge(0) | aa_data[f'{ci}_upper'].le(0)
             )
-            for ci in ['naive', 'delta', 'fieller']
+            for ci in ['naive', 'delta', 'logdelta', 'fieller']
         })
         .transpose()
     )
@@ -161,7 +162,7 @@ def main():
                 upper=aa_data[f'{ci}_upper'],
                 true_param_value=0,
             )
-            for ci in ['naive', 'delta', 'fieller']
+            for ci in ['naive', 'delta', 'logdelta', 'fieller']
         })
         .transpose()
     )
@@ -184,7 +185,7 @@ def main():
             ci: null_rejected(
                 ab_data[f'{ci}_lower'].ge(0) | aa_data[f'{ci}_upper'].le(0)
             )
-            for ci in ['naive', 'delta', 'fieller']
+            for ci in ['naive', 'delta', 'logdelta', 'fieller']
         })
         .transpose()
     )
@@ -196,7 +197,7 @@ def main():
                 upper=ab_data[f'{ci}_upper'],
                 true_param_value=TRUE_RELATIVE_DIFF,
             )
-            for ci in ['naive', 'delta', 'fieller']
+            for ci in ['naive', 'delta', 'logdelta', 'fieller']
         })
         .transpose()
     )
