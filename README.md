@@ -1,4 +1,4 @@
-Compares several ways for calculating confidence interval (CI) of the relative difference of two sample means:
+Compares several ways of calculating confidence interval (CI) of the relative difference of two sample means:
 - naive (and also wrong) -- absolute CI divided by control mean.
 - delta -- relative CI with delta method.
 - logdelta -- also delta method, only applied to log-transformed ratio.
