@@ -9,6 +9,11 @@ The script does the following:
 - Calculates proportions of samples where CI does not include zero (type I error or statistical power).
 - Calculates true confidence level and it's quantiles (since we know the true parameter value).
 
+Usage:
+```
+python relative_confidence_interval.py > results.txt
+```
+
 Links:
 - https://en.wikipedia.org/wiki/Delta_method
 - https://en.wikipedia.org/wiki/Fieller%27s_theorem
