@@ -175,7 +175,7 @@ if __name__ == '__main__':
         )
         for i in tqdm.tqdm(range(N_EXPERIMENTS))
     )
-    print(aa_data)
+    print(aa_data.to_string(max_rows=10))
 
     print('\nType I error:')
     print(
@@ -215,7 +215,7 @@ if __name__ == '__main__':
         )
         for i in tqdm.tqdm(range(N_EXPERIMENTS))
     )
-    print(ab_data)
+    print(ab_data.to_string(max_rows=10))
 
     print('\nStatistical power:')
     print(
