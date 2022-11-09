@@ -7,7 +7,7 @@ Compare several ways for calculating confidence interval (CI) of the relative di
 The script does the following:
 - Simulates many experiments to generate pairs of samples (AA or AB).
 - Calculates proportions of samples where does not include zero (type I error or statistical power).
-- Calculates true confidence level and it's quantiles (since we know the true parameter value)
+- Calculates true confidence level and it's quantiles (since we know the true parameter value).
 
 Links:
 - https://en.wikipedia.org/wiki/Delta_method
