@@ -1,0 +1,11 @@
+name: relative-confidence-interval
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - isort
+  - numpy
+  - pandas
+  - pylint
+  - scipy
+  - tqdm
