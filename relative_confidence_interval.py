@@ -33,13 +33,11 @@ import tqdm
 
 
 RANDOM_SEED = 42
+N_EXPERIMENTS = 10000
+
 TRUE_CONTROL_MEAN = 5
 TRUE_RELATIVE_DIFF = 0.3
 TRUE_TREATMENT_MEAN = TRUE_CONTROL_MEAN * (1 + TRUE_RELATIVE_DIFF)
-
-CONTROL_SIZE = 1000
-TREATEMT_SIZE = CONTROL_SIZE
-N_EXPERIMENTS = 10000
 
 # Sample from skewed negative binomial distribution.
 SAMPLE_DISTR = 'negative_binomial'
@@ -55,6 +53,8 @@ TREATMENT_PARAMS = {
 
 # Random sample size from poisson distibution.
 SIZE_DISTR = 'poisson'
+CONTROL_SIZE = 1000
+TREATEMT_SIZE = CONTROL_SIZE
 
 
 def calc_experiment(
