@@ -34,6 +34,8 @@ import tqdm
 
 RANDOM_SEED = 42
 N_EXPERIMENTS = 10000
+CONTROL_SIZE = 1000
+TREATMENT_SIZE = CONTROL_SIZE
 
 TRUE_CONTROL_MEAN = 5
 TRUE_RELATIVE_DIFF = 0.3
@@ -42,36 +44,36 @@ TRUE_TREATMENT_MEAN = TRUE_CONTROL_MEAN * (1 + TRUE_RELATIVE_DIFF)
 # Sample from skewed negative binomial distribution.
 SAMPLE_DISTR = 'negative_binomial'
 SHAPE = 0.2
-CONTROL_PARAMS = {
+SAMPLE_CONTROL_PARAMS = {
     'n': SHAPE,
     'p': SHAPE / (SHAPE + TRUE_CONTROL_MEAN),
 }
-TREATMENT_PARAMS = {
+SAMPLE_TREATMENT_PARAMS = {
     'n': SHAPE,
     'p': SHAPE / (SHAPE + TRUE_TREATMENT_MEAN),
 }
 
-# Random sample size from poisson distibution.
+# Sample sizes from poisson distibution.
 SIZE_DISTR = 'poisson'
-CONTROL_SIZE = 1000
-TREATEMT_SIZE = CONTROL_SIZE
+SIZE_CONTROL_PARAMS = {'lam': CONTROL_SIZE}
+SIZE_TREATMENT_PARAMS = {'lam': TREATMENT_SIZE}
 
 
 def calc_experiment(
-    control_params: dict[str, float],
-    treatment_params: dict[str, float],
-    control_size: int,
-    treatment_size: int,
     sample_distr: Callable,
+    sample_control_params: dict,
+    sample_treatment_params: dict,
     size_distr: Callable,
+    size_control_params: dict,
+    size_treatment_params: dict,
 ) -> dict:
     control = sample_distr(
-        **control_params,
-        size=size_distr(control_size),
+        **sample_control_params,
+        size=size_distr(**size_control_params),
     )
     treatment = sample_distr(
-        **treatment_params,
-        size=size_distr(treatment_size),
+        **sample_treatment_params,
+        size=size_distr(**size_treatment_params),
     )
 
     mean1 = np.mean(treatment)
@@ -166,12 +168,12 @@ if __name__ == '__main__':
     print('AA experiments:')
     aa_data = pd.DataFrame(
         calc_experiment(
-            control_params=CONTROL_PARAMS,
-            treatment_params=CONTROL_PARAMS,
-            control_size=CONTROL_SIZE,
-            treatment_size=TREATEMT_SIZE,
             sample_distr=getattr(rng, SAMPLE_DISTR),
+            sample_control_params=SAMPLE_CONTROL_PARAMS,
+            sample_treatment_params=SAMPLE_CONTROL_PARAMS,
             size_distr=getattr(rng, SIZE_DISTR),
+            size_control_params=SIZE_CONTROL_PARAMS,
+            size_treatment_params=SIZE_TREATMENT_PARAMS,
         )
         for i in tqdm.tqdm(range(N_EXPERIMENTS))
     )
@@ -206,12 +208,12 @@ if __name__ == '__main__':
     print('\nAB experiments:')
     ab_data = pd.DataFrame(
         calc_experiment(
-            control_params=CONTROL_PARAMS,
-            treatment_params=TREATMENT_PARAMS,
-            control_size=CONTROL_SIZE,
-            treatment_size=TREATEMT_SIZE,
             sample_distr=getattr(rng, SAMPLE_DISTR),
+            sample_control_params=SAMPLE_CONTROL_PARAMS,
+            sample_treatment_params=SAMPLE_TREATMENT_PARAMS,
             size_distr=getattr(rng, SIZE_DISTR),
+            size_control_params=SIZE_CONTROL_PARAMS,
+            size_treatment_params=SIZE_TREATMENT_PARAMS,
         )
         for i in tqdm.tqdm(range(N_EXPERIMENTS))
     )
