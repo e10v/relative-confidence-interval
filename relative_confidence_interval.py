@@ -12,6 +12,11 @@ The script does the following:
 - Calculates true confidence level and it's quantiles
 (since we know the true parameter value).
 
+Usage:
+```
+python relative_confidence_interval.py > results.txt
+```
+
 Links:
 - https://en.wikipedia.org/wiki/Delta_method
 - https://en.wikipedia.org/wiki/Fieller%27s_theorem
@@ -166,7 +171,6 @@ if __name__ == '__main__':
         )
         for i in tqdm.tqdm(range(N_EXPERIMENTS))
     )
-
     print(aa_data)
 
     print('\nType I error:')
@@ -207,8 +211,7 @@ if __name__ == '__main__':
         )
         for i in tqdm.tqdm(range(N_EXPERIMENTS))
     )
-
-    print(aa_data)
+    print(ab_data)
 
     print('\nStatistical power:')
     print(
