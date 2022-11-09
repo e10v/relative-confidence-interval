@@ -1,5 +1,21 @@
-"""Compare several formulas for calculating
-relative difference of two sample means.
+"""Compares several ways for calculating confidence interval (CI)
+of the relative difference of two sample means:
+- naive (and also wrong) -- absolute CI divided by control mean.
+- delta -- relative CI with delta method.
+- logdelta -- also delta method, only applied to log-transformed ratio.
+- fieller -- Fieller's confidence interval.
+
+The script does the following:
+- Simulates many experiments to generate pairs of samples (AA or AB).
+- Calculates proportions of samples where CI does not include zero
+(type I error or statistical power).
+- Calculates true confidence level and it's quantiles
+(since we know the true parameter value).
+
+Links:
+- https://en.wikipedia.org/wiki/Delta_method
+- https://en.wikipedia.org/wiki/Fieller%27s_theorem
+- https://github.com/cran/mratios/blob/master/R/ttestratio.R
 """
 
 from collections.abc import Callable
@@ -8,18 +24,19 @@ import numpy as np
 from numpy.typing import ArrayLike
 import pandas as pd
 from scipy import stats
-from tqdm import tqdm
+import tqdm
 
 
-SEED = 42
+RANDOM_SEED = 42
 TRUE_CONTROL_MEAN = 5
 TRUE_RELATIVE_DIFF = 0.3
 TRUE_TREATMENT_MEAN = TRUE_CONTROL_MEAN * (1 + TRUE_RELATIVE_DIFF)
 
 CONTROL_SIZE = 1000
 TREATEMT_SIZE = CONTROL_SIZE
-N_EXPERIMENTS = 1000
+N_EXPERIMENTS = 10000
 
+# Sample from skewed negative binomial distribution.
 SHAPE = 0.2
 CONTROL_PARAMS = {
     'n': SHAPE,
@@ -38,7 +55,7 @@ def calc_experiment(
     treatment_size: int,
     sample_distr: Callable,
     size_distr: Callable,
-) -> dict[str, float]:
+) -> dict:
     control = sample_distr(
         **control_params,
         size=size_distr(control_size),
@@ -97,15 +114,19 @@ def calc_experiment(
     }
 
 
-def null_rejected(x: ArrayLike) -> dict[str, float]:
-    lower, upper = (
+def null_rejected(
+    lower: ArrayLike,
+    upper: ArrayLike,
+) -> dict:
+    x = (lower > 0) | (upper < 0)
+    x_lower, x_upper = (
         stats.binomtest(k=np.sum(x), n=len(x), p=0.05)
         .proportion_ci(method='wilsoncc')
     )
 
     return {
         'mean': np.mean(x),
-        'conf_int': f'({round(lower, 4)}, {round(upper, 4)})',
+        'conf_int': f'({round(x_lower, 4)}, {round(x_upper, 4)})',
     }
 
 
@@ -113,7 +134,7 @@ def true_param_location(
     lower: ArrayLike,
     upper: ArrayLike,
     true_param_value: float,
-) -> dict[str, float]:
+) -> dict:
     x = (lower < true_param_value) & (true_param_value < upper)
     x_lower, x_upper = (
         stats.binomtest(k=np.sum(x), n=len(x), p=0.05)
@@ -130,9 +151,10 @@ def true_param_location(
     }
 
 
-def main():
-    rng = np.random.default_rng(SEED)
+if __name__ == '__main__':
+    rng = np.random.default_rng(RANDOM_SEED)
 
+    print('AA experiments:')
     aa_data = pd.DataFrame(
         calc_experiment(
             control_params=CONTROL_PARAMS,
@@ -142,19 +164,24 @@ def main():
             sample_distr=rng.negative_binomial,
             size_distr=rng.poisson,
         )
-        for i in tqdm(range(N_EXPERIMENTS))
+        for i in tqdm.tqdm(range(N_EXPERIMENTS))
     )
 
+    print(aa_data)
+
+    print('\nType I error:')
     print(
         pd.DataFrame({
             ci: null_rejected(
-                aa_data[f'{ci}_lower'].ge(0) | aa_data[f'{ci}_upper'].le(0)
+                lower=aa_data[f'{ci}_lower'],
+                upper=aa_data[f'{ci}_upper'],
             )
             for ci in ['naive', 'delta', 'logdelta', 'fieller']
         })
         .transpose()
     )
 
+    print('\nTrue confidence levels:')
     print(
         pd.DataFrame({
             ci: true_param_location(
@@ -168,6 +195,7 @@ def main():
     )
 
 
+    print('\nAB experiments:')
     ab_data = pd.DataFrame(
         calc_experiment(
             control_params=CONTROL_PARAMS,
@@ -177,19 +205,24 @@ def main():
             sample_distr=rng.negative_binomial,
             size_distr=rng.poisson,
         )
-        for i in tqdm(range(N_EXPERIMENTS))
+        for i in tqdm.tqdm(range(N_EXPERIMENTS))
     )
 
+    print(aa_data)
+
+    print('\nStatistical power:')
     print(
         pd.DataFrame({
             ci: null_rejected(
-                ab_data[f'{ci}_lower'].ge(0) | aa_data[f'{ci}_upper'].le(0)
+                lower=ab_data[f'{ci}_lower'],
+                upper=ab_data[f'{ci}_upper'],
             )
             for ci in ['naive', 'delta', 'logdelta', 'fieller']
         })
         .transpose()
     )
 
+    print('\nTrue confidence levels:')
     print(
         pd.DataFrame({
             ci: true_param_location(
@@ -201,6 +234,3 @@ def main():
         })
         .transpose()
     )
-
-if __name__ == '__main__':
-    main()
