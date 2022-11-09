@@ -42,6 +42,7 @@ TREATEMT_SIZE = CONTROL_SIZE
 N_EXPERIMENTS = 10000
 
 # Sample from skewed negative binomial distribution.
+SAMPLE_DISTR = 'negative_binomial'
 SHAPE = 0.2
 CONTROL_PARAMS = {
     'n': SHAPE,
@@ -51,6 +52,9 @@ TREATMENT_PARAMS = {
     'n': SHAPE,
     'p': SHAPE / (SHAPE + TRUE_TREATMENT_MEAN),
 }
+
+# Random sample size from poisson distibution.
+SIZE_DISTR = 'poisson'
 
 
 def calc_experiment(
@@ -166,8 +170,8 @@ if __name__ == '__main__':
             treatment_params=CONTROL_PARAMS,
             control_size=CONTROL_SIZE,
             treatment_size=TREATEMT_SIZE,
-            sample_distr=rng.negative_binomial,
-            size_distr=rng.poisson,
+            sample_distr=getattr(rng, SAMPLE_DISTR),
+            size_distr=getattr(rng, SIZE_DISTR),
         )
         for i in tqdm.tqdm(range(N_EXPERIMENTS))
     )
@@ -206,8 +210,8 @@ if __name__ == '__main__':
             treatment_params=TREATMENT_PARAMS,
             control_size=CONTROL_SIZE,
             treatment_size=TREATEMT_SIZE,
-            sample_distr=rng.negative_binomial,
-            size_distr=rng.poisson,
+            sample_distr=getattr(rng, SAMPLE_DISTR),
+            size_distr=getattr(rng, SIZE_DISTR),
         )
         for i in tqdm.tqdm(range(N_EXPERIMENTS))
     )
