@@ -1,4 +1,4 @@
-Compare several ways for calculating confidence interval (CI) of the relative difference of two sample means:
+Compares several ways for calculating confidence interval (CI) of the relative difference of two sample means:
 - naive (and also wrong) -- absolute CI divided by control mean.
 - delta -- relative CI with delta method.
 - logdelta -- also delta method, only applied to log-transformed ratio.
@@ -6,7 +6,7 @@ Compare several ways for calculating confidence interval (CI) of the relative di
 
 The script does the following:
 - Simulates many experiments to generate pairs of samples (AA or AB).
-- Calculates proportions of samples where does not include zero (type I error or statistical power).
+- Calculates proportions of samples where CI does not include zero (type I error or statistical power).
 - Calculates true confidence level and it's quantiles (since we know the true parameter value).
 
 Links:
